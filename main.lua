@@ -591,7 +591,7 @@ end
           menu:dibujar(anchoVentana/2 - 175, altoVentana/2 - 50)
           
           --love.graphics.setNewFont("llpixel/LLPIXEL3.TTF", 90)
-          love.graphics.setNewFont("fuentes/Pixelmania.TTF", 45)
+          love.graphics.setNewFont("fuentes/Pixelmania.ttf", 45)
           love.graphics.printf("ESCAPE FROM THE MAZE", 0, love.graphics.getHeight()-(love.graphics.getHeight()/4)*3, love.graphics.getWidth(), "center")
           
           if musicaJuego:isPlaying() then
@@ -606,7 +606,7 @@ end
     elseif estadoDelJuego == 3 then
         
         --Mensaje de ganador
-        love.graphics.setNewFont("fuentes/Pixelmania.TTF", 45)
+        love.graphics.setNewFont("fuentes/Pixelmania.ttf", 45)
         love.graphics.printf("¡Ganaste!", 0, love.graphics.getHeight()-(love.graphics.getHeight()/4)*3, love.graphics.getWidth(), "center")
         estadoDelJuego=1
         
