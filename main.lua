@@ -65,7 +65,7 @@ function love.load()
   jugador.y = love.graphics.getHeight() / 2
   jugador.xF = (love.graphics.getWidth() / 2)  
   jugador.yF = love.graphics.getHeight() / 2
-  jugador.velocidad = 180
+  jugador.velocidad = 200
   jugador.puntos = 0
   
   --Campo para detectar las colisiones del jugador
@@ -726,4 +726,162 @@ end
   
 end
 
+end
+--Funcion para crear zombies una vez se comience el juego apretando el espacio
+function love.keypressed( tecla )
+  if tecla == "space" then
+      crearZombie()
+  end
+end
+
+--Funcion para disparar si ya ha comenzado
+function love.mousepressed( x, y, boton )
+  if boton == 1 and estadoDelJuego == 2 and estadoPausa == false then
+      crearBala()
+      love.audio.play( sonidoEfectoDisparo )
+  
+  end
+end
+
+function love.keypressed(key)
+if estadoDelJuego == 1 then
+  
+  menu:keypressed(key)
+else if estadoDelJuego == 2 and estadoPausa == true then
+  if estadoConfiguracionSonido then
+    configSonido:keypressed(key)
+  else
+  pausa:keypressed(key)
+  end
+end
+end
+end
+
+--Funcion para crear una bala
+function crearBala()
+  local bala = {}
+  bala.x = jugador.x
+  bala.y = jugador.y
+  bala.velocidad = 500
+  bala.muerto = false
+  bala.direccion = jugadorAnguloMouse()
+  table.insert(balas, bala)
+end
+
+--Funcion para calcular la distancia entre dos coordenadas en la pantalla
+function distanciaEntre(x1, y1, x2, y2)
+  return math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+end
+
+--Funciones para revisar las colisiones de un cuerpo respecto a las casillas del laberinto
+function revisarColisionesDerecha(cuerpoRecibido)
+local iArr = math.floor( (cuerpoRecibido.y/tamCasillas) + 0.4 )
+local jDer = math.floor( ( (cuerpoRecibido.x+cuerpoRecibido.ancho) /tamCasillas)-0.3 )
+local iAbaj = math.floor( ( (cuerpoRecibido.y+cuerpoRecibido.alto) /tamCasillas) +0.4  )
+local jIzq = math.floor( (cuerpoRecibido.x/tamCasillas)-0.3 )
+local n = 10
+
+if jDer==(labX+1) then 
+  return false
+  
+elseif (mapa1[iArr][jDer].tipo == 1 and mapa1[iAbaj][jDer].tipo == 1) then
+  return false
+  
+elseif (mapa1[iArr][jDer].tipo == 1 and mapa1[iArr][jIzq].tipo == 0 and mapa1[iAbaj][jIzq].tipo == 0) or (mapa1[math.floor(iAbaj)][math.floor(jDer)].tipo == 1 and mapa1[iArr][jIzq].tipo == 0 and mapa1[iAbaj][jIzq].tipo == 0) then
+  
+  local i1 = math.floor( ( ( cuerpoRecibido.y + n )/ tamCasillas ) + 0.4 )
+  local i2 = math.floor( ( ( cuerpoRecibido.y - n + cuerpoRecibido.ancho) /tamCasillas ) + 0.4 )
+  if mapa1[i1][jDer].tipo == 0 and mapa1[i2][jDer].tipo == 0 then
+    return true
+  else 
+    return false
+  end
+  
+else 
+  return true
+end
+end
+
+function revisarColisionesIzquierda(cuerpoRecibido)
+local iArr = math.floor( (cuerpoRecibido.y/tamCasillas) + 0.4 )
+local jDer = math.floor( ( (cuerpoRecibido.x+cuerpoRecibido.ancho) /tamCasillas)-0.3 )
+local iAbaj = math.floor( ( (cuerpoRecibido.y+cuerpoRecibido.alto) /tamCasillas) +0.4  )
+local jIzq = math.floor( (cuerpoRecibido.x/tamCasillas)-0.3 )
+local n = 10
+
+if jIzq==0 then 
+  return false
+  
+elseif (mapa1[iArr][jIzq].tipo == 1 and mapa1[iAbaj][jIzq].tipo == 1) then
+  return false
+  
+elseif (mapa1[iArr][jIzq].tipo == 1 and mapa1[iArr][jDer].tipo == 0 and mapa1[iAbaj][jDer].tipo == 0) or (mapa1[iAbaj][jIzq].tipo == 1 and mapa1[iArr][jDer].tipo == 0 and mapa1[iAbaj][jDer].tipo == 0) then
+  
+  local i1 = math.floor( ( ( cuerpoRecibido.y + n )/ tamCasillas ) + 0.4 )
+  local i2 = math.floor( ( ( cuerpoRecibido.y - n + cuerpoRecibido.ancho) /tamCasillas ) + 0.4 )
+  if mapa1[i1][jIzq].tipo == 0 and mapa1[i2][jIzq].tipo == 0 then
+    return true
+  else 
+    return false
+  end
+  
+else 
+  return true
+end
+end
+
+function revisarColisionesArriba(cuerpoRecibido)
+local iArr = math.floor( (cuerpoRecibido.y/tamCasillas) + 0.4 )
+local jDer = math.floor( ( (cuerpoRecibido.x+cuerpoRecibido.ancho) /tamCasillas)-0.3 )
+local iAbaj = math.floor( ( (cuerpoRecibido.y+cuerpoRecibido.alto) /tamCasillas) +0.4  )
+local jIzq = math.floor( (cuerpoRecibido.x/tamCasillas)-0.3 )
+local n =  10
+
+if iArr==0 then 
+  return false
+  
+elseif (mapa1[iArr][jDer].tipo == 1 and mapa1[iArr][jIzq].tipo == 1)  then
+  return false
+  
+elseif (mapa1[iArr][jDer].tipo == 1 and mapa1[iAbaj][jDer].tipo == 0 and mapa1[iAbaj][jIzq].tipo == 0 ) or (mapa1[iArr][jIzq].tipo == 1 and mapa1[iAbaj][jDer].tipo == 0 and mapa1[iAbaj][jIzq].tipo == 0 ) then
+  
+  local j1 = math.floor( ( ( cuerpoRecibido.x + n )/ tamCasillas ) - 0.3 )
+  local j2 = math.floor( ( ( cuerpoRecibido.x-n+cuerpoRecibido.ancho) /tamCasillas ) - 0.3 )
+  if mapa1[iArr][j1].tipo == 0 and mapa1[iArr][j2].tipo == 0 then
+    return true
+  else 
+    return false
+  end
+
+else 
+  return true
+end
+end
+
+function revisarColisionesAbajo(cuerpoRecibido)
+local iArr = math.floor( (cuerpoRecibido.y/tamCasillas) + 0.4 )
+local jDer = math.floor( ( (cuerpoRecibido.x+cuerpoRecibido.ancho) /tamCasillas)-0.3 )
+local iAbaj = math.floor( ( (cuerpoRecibido.y+cuerpoRecibido.alto) /tamCasillas) +0.4  )
+local jIzq = math.floor( (cuerpoRecibido.x/tamCasillas)-0.3 )
+local n = 10
+
+if iAbaj==(labY+1) then 
+  return false
+  
+elseif (mapa1[iAbaj][jDer].tipo == 1 and mapa1[iAbaj][jIzq].tipo == 1) then
+  return false
+  
+elseif (mapa1[iAbaj][jDer].tipo == 1 and mapa1[iArr][jDer].tipo == 0 and mapa1[iArr][jIzq].tipo == 0) or (mapa1[iAbaj][jIzq].tipo == 1 and mapa1[iArr][jDer].tipo == 0 and mapa1[iArr][jIzq].tipo == 0)  then
+  
+  local j1 = math.floor( ( ( cuerpoRecibido.x + n )/ tamCasillas ) - 0.3 )
+  local j2 = math.floor( ( ( cuerpoRecibido.x-n+cuerpoRecibido.ancho) /tamCasillas ) - 0.3 )
+  if mapa1[iAbaj][j1].tipo == 0 and mapa1[iAbaj][j2].tipo == 0 then
+    return true
+  else 
+    return false
+  end
+  
+else
+  return true
+end
 end
