@@ -1,8 +1,8 @@
 zombie = require "zombie"
 Menu = require "menu"
-config = require "config"
-Pausa = require "pausa"
-require("objetivos")
+config = require "configuracion"
+Pausa = require "pause"
+require("goals")
 ConfigSonido = require "configSonido"
 corazon = require "corazon"
 
@@ -94,13 +94,13 @@ function love.load()
   love.graphics.setNewFont("fuentes/04B_30__.TTF", 80)
    
   --Craga la musica y los efectos de sonido 
-  musicaIntro = love.audio.newSource("musica/Origami Repetika - Quare Frolic.mp3", "stream")
-  musicaJuego = love.audio.newSource("musica/Rolemusic - Pokimonkey.mp3", "stream")
+  musicaIntro = love.audio.newSource("musica/musicaIntro.mp3", "stream")
+  musicaJuego = love.audio.newSource("musica/musicaInGame.mp3", "stream")
   sonidoPerder = love.audio.newSource("musica/gameOverEffect.wav", "static")
   sonidoEfectoDisparo = love.audio.newSource("musica/firingEffect.wav", "static")
   sonidoGanar = love.audio.newSource("musica/shinyglittersoundeffect.wav", "static")
     
-    musicaJuego:setVolume(0.2)
+    musicaJuego:setVolume(0.1)
 	
 	--Cargar tables de zombies, de las balas y de corazones
     zombies = {}
@@ -234,4 +234,156 @@ function love.load()
     end
   }
   end
+
+  
+
+  function love.draw()
+    
+    --Sacar el tamaño de la ventana
+    local anchoVentana = love.graphics.getWidth()
+    local altoVentana = love.graphics.getHeight()
+    
+    cam:attach()
+    --Si el juego aun no comenzo
+    if estadoDelJuego == 1 then
+        love.graphics.draw(sprites.fondoMenu, 0, 0)
+        love.graphics.setNewFont("fuentes/04B_30__.TTF", 70)
+          menu:dibujar(anchoVentana/2 - 175, altoVentana/2 - 50)
+          
+          --love.graphics.setNewFont("llpixel/LLPIXEL3.TTF", 90)
+          love.graphics.setNewFont("fuentes/Pixelmania.TTF", 45)
+          love.graphics.printf("ESCAPE FROM THE MAZE", 0, love.graphics.getHeight()-(love.graphics.getHeight()/4)*3, love.graphics.getWidth(), "center")
+          
+          if musicaJuego:isPlaying() then
+            love.audio.stop(musicaJuego)
+          end
+      
+          --Musica para el menu principal
+          love.audio.play(musicaIntro)
+          if not musicaIntro:isPlaying() then
+            love.audio.play(musicaIntro)
+          end
+    elseif estadoDelJuego == 3 then
+        
+        --Mensaje de ganador
+        love.graphics.setNewFont("fuentes/Pixelmania.TTF", 45)
+        love.graphics.printf("¡Ganaste!", 0, love.graphics.getHeight()-(love.graphics.getHeight()/4)*3, love.graphics.getWidth(), "center")
+        estadoDelJuego=1
+        
+    elseif estadoDelJuego == 2 then
+        --RGB (62,94,109)
+        local rojo = 62/255
+        local verde = 94/255
+        local azul = 109/255
+        local alfa = 50/100
+        love.graphics.setBackgroundColor(rojo,verde,azul,alfa)
+      
+        --Dibuja el laberinto
+        dibujarLaberinto(mapa1, tamCasillas)
+   
+        --Dibujar los objetivos
+        dibujarPuntos(objetivos)
+
+        --Dibuja los corazones
+        for e,p in ipairs(corazonest) do
+          love.graphics.draw(sprites.corazon, p.x, p.x, nil, 0.75, nil, sprites.corazon:getWidth()/2, sprites.corazon:getHeight()/2)
+        end
+    
+       --Dibuja al jugador en la pantalla
+        love.graphics.draw(sprites.jugador, jugador.x, jugador.y, jugadorAnguloMouse(), nil, nil, sprites.jugador:getWidth()/2, sprites.jugador:getHeight()/2)
+        
+        --Dibuja a los zombies 
+        for i,z in ipairs(zombies) do
+          love.graphics.draw(sprites.zombie, z.x, z.y, zombieJugadorAngulo(z), nil, nil, sprites.zombie:getWidth()/2, sprites.zombie:getHeight()/2)
+        end
+    
+        --Dibuja las balas
+        for i,b in ipairs(balas) do
+          love.graphics.draw(sprites.bala, b.x, b.y, nil, 0.5, nil, sprites.bala:getWidth()/2, sprites.bala:getHeight()/2)
+        end
+      
+        if musicaReproduciendose == true then
+          --Para la musica de la introduccion si esta sonando
+          if musicaIntro:isPlaying() then
+            love.audio.stop(musicaIntro)
+          end
+        
+          --Musica dentro del juego
+          love.audio.play(musicaJuego)
+            if not musicaJuego:isPlaying( ) then
+              love.audio.play(musicaJuego)
+            end
+        end
+    end
+    cam:detach()
+    
+    if estadoDelJuego == 2  then
+
+      --Dibuja la sombra
+      love.graphics.draw(sprites.sombra, -150, -50, 0, 1, 1)
+
+      --Dibuja los corazones en la pantalla dependiendo de cuantos le queden al jugador
+      if corazones ~=0 then
+        love.graphics.draw(dibujos[math.floor(corazones)], love.graphics.getHeight()-(love.graphics.getHeight()/6)*5.7, 15)
+      end
+      
+      --Dibuja el medidor de energia
+      if enfriamientoDesplazamiento >= 0 then
+        love.graphics.draw(dibujosEnergia[math.floor(enfriamientoDesplazamiento+1)],love.graphics.getHeight()-(love.graphics.getHeight()/6)*5.7 , 90)
+      elseif enfriamientoDesplazamiento < 0 then
+        love.graphics.draw(dibujosEnergia[math.floor(1)],love.graphics.getHeight()-(love.graphics.getHeight()/6)*5.7 , 90)
+      end
+
+      --Dibuja el puntaje en pantalla
+      love.graphics.setNewFont("fuentes/04B_30__.TTF", 35)
+      love.graphics.printf("puntaje: " .. puntaje, 0, love.graphics.getHeight()-love.graphics.getHeight()/6, love.graphics.getWidth()-500, "center")
+      
+      --Dibuja los objetivos en pantalla
+      love.graphics.setNewFont("fuentes/04B_30__.TTF", 35)
+      love.graphics.printf("objetivos: " .. jugador.puntos .. "/3", 0, love.graphics.getHeight()-love.graphics.getHeight()/6, love.graphics.getWidth()+500, "center")
+      
+      --Dibuja el cursor con el sprite
+      love.graphics.draw(sprites.cursor, cx-15, cy-15, 0, 0.07)
+    end
+    
+     --Dibuja pantalla de pausa
+     if estadoPausa then
+      love.graphics.draw(sprites.fondoPausa, 10, -10, 0, 1.1, 1.1) --Fondo
+
+      if estadoConfiguracionSonido == false then    
+        love.graphics.printf("PAUSA", 0, love.graphics.getHeight()-530, love.graphics.getWidth()-200, "center", 0, 1, 1, -100, 0) --Titulo Pausa
+        pausa:dibujar(love.graphics.getWidth()/2 - 175, love.graphics.getHeight()/2 - 50)
+      end
+      if estadoConfiguracionSonido then
+        love.graphics.printf("configuracion de sonido", 0, love.graphics.getHeight()-530, love.graphics.getWidth()-200, "center", 0, 1, 1, -100, 0)
+        configSonido:dibujar(love.graphics.getWidth()/2 - 175, love.graphics.getHeight()/2 - 50)
+       
+        if volumenMusica == 1 then love.graphics.printf("*****", 0, love.graphics.getHeight()-340, love.graphics.getWidth(), "left", 0, 1, 1, -427, 0) end
+        if volumenMusica >= 0.8 then love.graphics.printf("**** ", 0, love.graphics.getHeight()-340, love.graphics.getWidth(), "left", 0, 1, 1, -427, 0) end
+        if volumenMusica >= 0.6 then love.graphics.printf("***  ", 0, love.graphics.getHeight()-340, love.graphics.getWidth(), "left", 0, 1, 1, -427, 0) end
+        if volumenMusica >= 0.4 then love.graphics.printf("**   ", 0, love.graphics.getHeight()-340, love.graphics.getWidth(), "left", 0, 1, 1, -427, 0) end
+        if volumenMusica >= 0.2 then love.graphics.printf("*    ", 0, love.graphics.getHeight()-340, love.graphics.getWidth(), "left", 0, 1, 1, -427, 0) end
+
+        if volumenEfectos == 1 then love.graphics.printf("*****", 0, love.graphics.getHeight()-240, love.graphics.getWidth(), "left", 0, 1, 1, -450, 0) end
+        if volumenEfectos >= 0.8 then love.graphics.printf("**** ", 0, love.graphics.getHeight()-240, love.graphics.getWidth(), "left", 0, 1, 1, -450, 0) end
+        if volumenEfectos >= 0.6 then love.graphics.printf("***  ", 0, love.graphics.getHeight()-240, love.graphics.getWidth(), "left", 0, 1, 1, -450, 0) end
+        if volumenEfectos >= 0.4 then love.graphics.printf("**   ", 0, love.graphics.getHeight()-240, love.graphics.getWidth(), "left", 0, 1, 1, -450, 0) end
+        if volumenEfectos >= 0.2 then love.graphics.printf("*    ", 0, love.graphics.getHeight()-240, love.graphics.getWidth(), "left", 0, 1, 1, -450, 0) end
+      end 
+
+      --love.graphics.draw(dibujos[math.floor(corazones)], 725, 485, 0, -.6, .6) --Dibuja corazones en menu
+      --love.graphics.printf("puntaje: " .. puntaje, 0, love.graphics.getHeight()-70, love.graphics.getWidth()+670, "right", 0, .5, .5) --Puntaje en menu
+      love.graphics.setNewFont("fuentes/04B_30__.TTF", 50)
+      
+      --Dibuja el cursor con el sprite
+      love.graphics.draw(sprites.cursor, cx-15, cy-15, 0, 0.07)
+
+    end
+
+  --Dibuja el cursor con el sprite
+  love.graphics.draw(sprites.cursor, cx-15, cy-15, 0, 0.07)
+
+  
+end
+
 end
