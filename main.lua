@@ -235,7 +235,347 @@ function love.load()
   }
   end
 
+  function love.update(dt)
   
+	--Tomar el input del usuario sobre la direccion 
+	--SOLO si el juego YA HA COMENZADO
+
+  if estadoPausa == false then --ESTADO 2 SOLO FUNCIONA SI NO ESTA EN PAUSA
+    if estadoDelJuego == 2 then
+        if (love.keyboard.isDown("d") or love.keyboard.isDown("right")) and math.floor(jugador.x+50) < ((tamCasillas * labX)+(1.3*tamCasillas)-5) then
+          if revisarColisionesDerecha(cuerpoJug) then
+            jugador.x = jugador.x + jugador.velocidad*dt
+          end
+        end
+      if (love.keyboard.isDown("a") or love.keyboard.isDown("left")) and math.floor(jugador.x-50) > (1.3*tamCasillas)+5 then
+          if  revisarColisionesIzquierda(cuerpoJug) then
+            jugador.x = jugador.x - jugador.velocidad*dt
+          end
+        end
+        if (love.keyboard.isDown("w") or love.keyboard.isDown("up")) and math.floor(jugador.y-50) > (0.6*tamCasillas)+5 then
+          if revisarColisionesArriba(cuerpoJug) then
+            jugador.y = jugador.y - jugador.velocidad*dt
+          end
+        end
+        if (love.keyboard.isDown("s") or love.keyboard.isDown("down")) and math.floor(jugador.y+50) < ((tamCasillas * labY)+(0.6*tamCasillas)-5) then
+          if revisarColisionesAbajo(cuerpoJug) then
+            jugador.y = jugador.y + jugador.velocidad*dt
+          end
+        end
+        
+        --Desplazamiento rapido
+        if (love.keyboard.isDown("d") or love.keyboard.isDown("right")) and (love.keyboard.isDown("space")) and enfriamientoDesplazamiento <= 0  and  math.floor(jugador.x+50) < ((tamCasillas * labX)+(1.3*tamCasillas)-5) then
+          if revisarColisionesDerecha(cuerpoJug) then
+            jugador.x = jugador.x + jugador.velocidad *dt
+            seDesplaza = true
+          end
+        end
+
+        if (love.keyboard.isDown("a") or love.keyboard.isDown("left")) and (love.keyboard.isDown("space")) and enfriamientoDesplazamiento <= 0 and math.floor(jugador.x-50) > (1.3*tamCasillas)+5 then
+          if revisarColisionesIzquierda(cuerpoJug) then
+            jugador.x = jugador.x - jugador.velocidad *dt
+            seDesplaza = true    
+          end
+        end
+
+        if (love.keyboard.isDown("w") or love.keyboard.isDown("up")) and (love.keyboard.isDown("space")) and enfriamientoDesplazamiento <= 0 and math.floor(jugador.y-50) > (0.6*tamCasillas)+5 then
+          if revisarColisionesArriba(cuerpoJug) then
+            jugador.y = jugador.y - jugador.velocidad *dt
+            seDesplaza = true
+          end
+        end
+
+        if (love.keyboard.isDown("s") or love.keyboard.isDown("down")) and (love.keyboard.isDown("space")) and enfriamientoDesplazamiento <= 0 and math.floor(jugador.y+50) < ((tamCasillas * labY)+(0.6*tamCasillas)-5) then
+          if revisarColisionesAbajo(cuerpoJug) then
+            jugador.y = jugador.y + jugador.velocidad *dt
+            seDesplaza = true 
+          end
+        end
+        
+        cuerpoJug.x=jugador.x-50
+        cuerpoJug.y=jugador.y-50
+        
+        -------------------
+        
+          --itera sobre la tabla de corazones del mapa
+          for e,p in ipairs(corazonest) do
+                
+          --Si el jugador toca uno de los corazones
+              if distanciaEntre(p.x, p.y, jugador.x, jugador.y) < 20 then
+                
+                --Si los corazones son mas de uno
+                if corazones < 3 then
+                  --Se añade uno
+                  corazones = corazones + 1
+                end 
+                   
+              --Elimina el corazon para que no se sigan aumentando vidas
+              p.agarrado = true
+            end
+        end
+
+        --Activa la pausa
+        if(love.keyboard.isDown("escape")) then
+          estadoPausa = true
+        end
+        
+        if musicaReproduciendose == false then
+          love.audio.stop(musicaIntro)
+        elseif not musicaIntro:isPlaying() and musicaReproduciendose == true then
+          --funciona bien 
+        end
+      
+       --Temporizador de enfriamiento para el desplazamiento 
+        if seDesplaza then
+          tiempoDesplazandoce = tiempoDesplazandoce+(dt/2)
+          if tiempoDesplazandoce > 0.5 then
+            tiempoDesplazandoce = 0;
+            seDesplaza = false
+            enfriamientoDesplazamiento = 5
+          end
+        end
+        if math.ceil(enfriamientoDesplazamiento)~= 0 then
+          enfriamientoDesplazamiento = enfriamientoDesplazamiento-dt
+        end 
+        -------
+
+
+      elseif estadoDelJuego == 1 then
+        if musicaReproduciendose == false then
+          love.audio.stop(musicaIntro)
+          
+        elseif not musicaIntro:isPlaying() and musicaReproduciendose == true then
+          --funciona bien 
+        end
+        menu:actualizar(dt)
+        configSonido:actualizar(dt)
+      end
+    
+
+	
+	--itera sobre la tabla de zombies y el movimiento que deben hacer respecto a la posicion del jugador
+    for i,z in ipairs(zombies) do
+        z.x = z.x + (math.cos( zombieJugadorAngulo(z) ) * z.velocidad * dt)
+        z.y = z.y + (math.sin( zombieJugadorAngulo(z) ) * z.velocidad * dt)
+        
+		--Reinicia el juego si un zombie toca al jugador
+        if distanciaEntre(z.x, z.y, jugador.x, jugador.y) < 40 then
+          
+          --Si los corazones son mas de uno
+          if corazones > 1 then
+            --Se elimina uno
+            corazones = corazones - 1
+            
+            --Elimina al enemigo para que no se sigan sacando vidas
+            z.muerto = true
+          else
+            --parar la musica del juego
+            if musicaJuego:isPlaying() then
+              love.audio.stop(musicaJuego)
+            end
+            --Pone sonido de perder
+            love.audio.play( sonidoPerder )
+            
+            --Dormir al programa por 1 seg mientras suena el efecto
+            love.timer.sleep(1)
+            contador = 10
+            adidorTiempo = 1
+            estadoDelJuego = 1
+            
+            
+            --Destruye todos los objetos zombie
+            for i,z in ipairs(zombies) do
+                  zombies[i] = nil
+
+            end
+            
+            for e, p in ipairs(corazonest) do
+              corazonest[e] = nil
+            end
+            --Coloca al jugador de nuevo al centro
+                  jugador.x = love.graphics.getWidth()/2
+                  jugador.y = love.graphics.getHeight()/2
+                  estadoDelJuego = 1
+                  love.graphics.setBackgroundColor(0,0,0,50)
+                  mapa1 = iniciarLaberinto(labY, labX)
+        end
+      
+    end
+  end
+	
+    --Itera sobre la tabla de objetivos para ver si los ha recolectado
+    for i,obj in ipairs(objetivos) do
+      --Si se acerca a un objetivo...
+      if distanciaEntre(obj.x, obj.y, jugador.x, jugador.y) < 25 then
+        --Añade el objetivo a los puntos del jugador
+        if obj.muerto==false then
+          jugador.puntos = jugador.puntos + 1
+          obj.muerto = true
+        end
+        --Si junto los tres objetivos...
+        if jugador.puntos==3 then --gana el juego
+          --parar la musica
+          if musicaJuego:isPlaying() then
+            love.audio.stop(musicaJuego)
+          end
+          --Poner sonido de ganar
+          love.audio.play(sonidoGanar)
+          
+          --Dormir al programa por 1 seg mientras suena el efecto
+          love.timer.sleep(2)
+          estadoDelJuego = 1
+          
+          --Destruye todos los objetos zombie
+          for i,z in ipairs(zombies) do
+            zombies[i] = nil
+          end
+          
+          --Coloca al jugador de nuevo al centro
+          jugador.x = love.graphics.getWidth()/2
+          jugador.y = love.graphics.getHeight()/2
+          
+          --Destruye los objetos objetivos 
+          for i,o in ipairs(objetivos) do
+            objetivos[i]=nil
+          end
+          
+          love.graphics.setBackgroundColor(0,0,0,50)
+          mapa1 = iniciarLaberinto(labY, labX)
+        end
+      end
+      
+    end
+  
+  --Obtiene la posicion del mouse para el cambio de sprite del mismo
+  cx, cy = love.mouse.getPosition()
+
+	--Itera sobre todos los elementos en la tabla de balas y
+	--saca su direccion y movimiento
+    for i,b in ipairs(balas) do
+        b.x = b.x + (math.cos( b.direccion ) * b.velocidad * dt)
+        b.y = b.y + (math.sin( b.direccion ) * b.velocidad * dt)
+    end
+	
+	--Remueve las balas que han salido de la pantalla
+    for i=#balas, 1, -1 do
+        local b = balas[i]
+        if b.x < 0 or b.y < 0 or b.x > ((tamCasillas * labX)+(1.3*tamCasillas)) or b.y > ((tamCasillas * labY)+(0.6*tamCasillas)) or (i>40) then
+            table.remove(balas, i)
+        end
+    end
+    
+    --Itera sobre los objetivos para borrar aquellos recogidos
+    for i,obj in ipairs(objetivos) do
+      if obj.muerto==true then
+        table.remove(objetivos,i)
+      end
+    end
+    
+	--Itera sobre los zombies buscando si alguna bala ha colisionado con ellos
+	--Si es asi, los elimina de la tabla y aumenta el puntaje
+    for i,z in ipairs(zombies) do
+        for j,b in ipairs(balas) do
+            if distanciaEntre(z.x, z.y, b.x, b.y) < 30 then
+                z.muerto = true
+                b.muerto = true
+                puntaje = puntaje + 1
+            end
+        end
+    end
+
+    for i=#zombies,1,-1 do
+        local z = zombies[i]
+        if z.muerto == true then
+          table.remove(zombies, i)
+        end
+    end
+    
+    --Remueve los corazones que han sido agarrados por el jugador
+    for i=#corazonest,1,-1 do
+        local c = corazonest[i]
+        if c.agarrado == true then
+            table.remove(corazonest, i)
+        end
+    end
+
+	--Remueve las balas que han colisionado con los enemigos
+    for i=#balas,1,-1 do
+        local b = balas[i]
+        if b.muerto == true then
+          table.remove(balas, i)
+        end
+    end
+  
+    
+	--Crea enemigos nuevos cada tantos segundos
+    if estadoDelJuego == 2 then
+        temporizador = temporizador - dt
+        if temporizador <= 0 then
+            crearZombie()
+            contador = contador - 1
+            tiempoMax = 0.95 * tiempoMax
+            temporizador = tiempoMax
+            
+            --Cada 10 enemigos, generar un corazon en un lado random del mapa
+            if contador == 0 then
+              crearCorazon()
+              adidorTiempo = adidorTiempo * 10
+              contador = 10 + adidorTiempo
+              
+
+            end
+            
+        end
+    end
+    
+    --Tomar la dimension de la pantalla
+    w = (love.graphics.getWidth() / 2)  
+    h = love.graphics.getHeight() / 2
+    
+    if estadoDelJuego == 2 then   
+      --Hacer que la camara siga al jugador
+      cam:lookAt(jugador.x, jugador.y)
+      
+      --Hacer que no llegue a los bordes, que la camara pare de seguirlo si se acerca al limite
+      if cam.x < w/2 then
+        cam.x = w/2
+      end
+      if cam.y < h/2 then
+        cam.y = h/2
+      end
+        
+        --Para los bordes de abajo:
+        --Cuanto tengamos un tile map funcionar habra que añadir:
+        
+      local mapaTileW = tamCasillas * (labX+1.3)
+      local mapaTileH = tamCasillas * (labY+0.6)
+        
+        --Solo si estamos trabajando con tiles, si estamos trabajando
+        --con un fondo normal, no se haria el calculo y solo se pondria 
+        --el ancho/alto del fondo :D
+        
+      if cam.x > (mapaTileW - w/2) then
+        cam.x = mapaTileW - w/2
+      end 
+      if cam.y > (mapaTileH - h/2) then
+        cam.y = mapaTileH - h/2
+      end
+        
+        
+    else
+      --Si estamos en el menu, que la camara este fija en el medio
+      cam:lookAt(w, h)
+
+  end
+  
+  --SI LA PAUSA ESTA ACTIVA
+  else
+    pausa:actualizar(dt)
+    configSonido:actualizar(dt)
+
+  end
+end
+
 
   function love.draw()
     
