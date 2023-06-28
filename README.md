@@ -1,6 +1,4 @@
 # Metodologia_proyecto
 
 # Escape from the Maze
-Este proyecto trata sobre la creacion de un videojuego 2D desarrollado en el lenguaje LÜA.
-
-El juego consiste en en tratar de escapar de un laberinto, el cual es generado automáticamente, encontrando 3 objetos que estarán repartidos en un lugar al azar del mapa. Pero cuidado, porque también habrán enemigos a los cuales tendremos que evitar o matar para no perder nuestras 3 vidas. El jugador podrá correr por un tiempo limitado y también podrá encontrara corazones de vida para regenerarse un corazon. 
+Es un sencillo juego de arcade que consiste en evitar y disparar a los enemigos, a su misma vez encontrar el camino para salir de los laberintos. Los enemigos cuentan con distintas velocidades y movimientos que intentan matar al personaje. Implementando efectos simples de sonido e imagen dados ciertos eventos. Dentro del laberinto habra distintos items como vidas extra, y los pertinentes para poder completar el juego. El objetivo del juego es matar a la mayor cantidad de enemigos, encontrar los items y huir del laberinto sin perder las 3 vidas. El laberinto será generado al azar al comienzo de cada partida, por lo que tiene una considerable rejugabilidad.
